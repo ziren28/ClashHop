@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>⛓️ Clash 代理链配置生成器</title>
+<style>
+:root {
+  --bg-primary: #0a0e1a;
+  --bg-secondary: #111827;
+  --bg-card: #1a2235;
+  --bg-card-hover: #1f2a40;
+  --bg-input: #0d1425;
+  --border: #2a3550;
+  --border-focus: #6366f1;
+  --text-primary: #e2e8f0;
+  --text-secondary: #94a3b8;
+  --text-muted: #64748b;
+  --accent: #6366f1;
+  --accent-hover: #818cf8;
+  --accent-glow: rgba(99,102,241,0.3);
+  --success: #10b981;
+  --success-glow: rgba(16,185,129,0.3);
+  --danger: #ef4444;
+  --danger-hover: #f87171;
+  --danger-glow: rgba(239,68,68,0.2);
+  --warning: #f59e0b;
+  --gradient-1: linear-gradient(135deg,#6366f1,#8b5cf6);
+  --gradient-2: linear-gradient(135deg,#10b981,#06b6d4);
+  --gradient-3: linear-gradient(135deg,#f59e0b,#ef4444);
+  --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+  --shadow-md: 0 4px 20px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 40px rgba(0,0,0,0.5);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --radius-lg: 16px;
+}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','SF Pro Display','Helvetica Neue',sans-serif;
+  background:var(--bg-primary);color:var(--text-primary);
+  min-height:100vh;line-height:1.6;overflow-x:hidden;
+}
+
+/* ── 背景动效 ── */
+.bg-animation{position:fixed;top:0;left:0;right:0;bottom:0;z-index:0;overflow:hidden;pointer-events:none;}
+.bg-orb{position:absolute;border-radius:50%;filter:blur(100px);opacity:.15;animation:floatOrb 20s ease-in-out infinite;}
+.bg-orb:nth-child(1){width:600px;height:600px;background:#6366f1;top:-200px;left:-100px;animation-delay:0s;}
+.bg-orb:nth-child(2){width:500px;height:500px;background:#8b5cf6;bottom:-150px;right:-100px;animation-delay:-7s;}
+.bg-orb:nth-child(3){width:400px;height:400px;background:#06b6d4;top:50%;left:50%;transform:translate(-50%,-50%);animation-delay:-14s;}
+@keyframes floatOrb{0%,100%{transform:translateY(0) scale(1);}50%{transform:translateY(-40px) scale(1.1);}}
+
+/* ── 布局 ── */
+.container{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:20px 16px 80px;}
+
+/* ── 头部 ── */
+.hero{text-align:center;padding:48px 20px 36px;margin-bottom:32px;}
+.hero-icon{font-size:56px;margin-bottom:12px;display:block;animation:pulse 2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+.hero h1{font-size:clamp(24px,5vw,36px);font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;margin-bottom:8px;letter-spacing:-.5px;}
+.hero p{color:var(--text-secondary);font-size:15px;max-width:520px;margin:0 auto;}
+
+/* ── 统计条 ── */
+.stats-bar{display:flex;gap:12px;margin-bottom:28px;flex-wrap:wrap;}
+.stat-card{flex:1;min-width:120px;background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:16px;text-align:center;transition:all .3s;}
+.stat-card:hover{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow);}
+.stat-num{font-size:28px;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+.stat-label{font-size:12px;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-top:2px;}
+
+/* ── 卡片通用 ── */
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:24px;margin-bottom:24px;transition:all .3s;backdrop-filter:blur(10px);}
+.card:hover{border-color:rgba(99,102,241,.3);}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:10px;}
+.card-title{font-size:18px;font-weight:700;display:flex;align-items:center;gap:10px;}
+.card-title .icon{font-size:22px;}
+.badge{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600;letter-spacing:.5px;}
+.badge-accent{background:rgba(99,102,241,.15);color:var(--accent-hover);}
+.badge-success{background:rgba(16,185,129,.15);color:var(--success);}
+.badge-warning{background:rgba(245,158,11,.15);color:var(--warning);}
+
+/* ── 输入区域 ── */
+.input-group{margin-bottom:16px;}
+.input-group label{display:block;font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;letter-spacing:.3px;}
+.input-row{display:flex;gap:10px;}
+input[type="text"],textarea{
+  width:100%;padding:12px 16px;background:var(--bg-input);border:1px solid var(--border);
+  border-radius:var(--radius-sm);color:var(--text-primary);font-size:14px;
+  transition:all .3s;outline:none;font-family:inherit;
+}
+input[type="text"]:focus,textarea:focus{border-color:var(--border-focus);box-shadow:0 0 0 3px var(--accent-glow);}
+input::placeholder,textarea::placeholder{color:var(--text-muted);}
+textarea{resize:vertical;min-height:80px;font-family:'SF Mono',Monaco,Consolas,'Courier New',monospace;font-size:13px;line-height:1.6;}
+
+/* ── 按钮 ── */
+.btn{
+  display:inline-flex;align-items:center;gap:6px;padding:10px 20px;border:none;
+  border-radius:var(--radius-sm);font-size:14px;font-weight:600;cursor:pointer;
+  transition:all .3s;font-family:inherit;white-space:nowrap;
+}
+.btn:active{transform:scale(.97);}
+.btn-primary{background:var(--gradient-1);color:#fff;box-shadow:0 4px 15px var(--accent-glow);}
+.btn-primary:hover{box-shadow:0 6px 25px var(--accent-glow);transform:translateY(-1px);}
+.btn-success{background:var(--gradient-2);color:#fff;box-shadow:0 4px 15px var(--success-glow);}
+.btn-success:hover{box-shadow:0 6px 25px var(--success-glow);transform:translateY(-1px);}
+.btn-danger{background:transparent;color:var(--danger);border:1px solid rgba(239,68,68,.3);padding:8px 14px;font-size:13px;}
+.btn-danger:hover{background:var(--danger-glow);border-color:var(--danger);}
+.btn-ghost{background:transparent;color:var(--text-secondary);border:1px solid var(--border);padding:8px 14px;font-size:13px;}
+.btn-ghost:hover{border-color:var(--text-secondary);color:var(--text-primary);}
+.btn-sm{padding:6px 12px;font-size:12px;}
+.btn-block{width:100%;justify-content:center;padding:14px 24px;font-size:15px;}
+.btn-group{display:flex;gap:8px;flex-wrap:wrap;}
+
+/* ── 节点列表 ── */
+.node-list{display:flex;flex-direction:column;gap:10px;}
+.node-item{
+  display:flex;align-items:center;gap:12px;padding:14px 16px;
+  background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius);
+  transition:all .3s;animation:slideIn .3s ease;
+}
+.node-item:hover{border-color:rgba(99,102,241,.4);background:var(--bg-card-hover);}
+@keyframes slideIn{from{opacity:0;transform:translateY(-10px);}to{opacity:1;transform:translateY(0);}}
+.node-drag{cursor:grab;color:var(--text-muted);font-size:16px;user-select:none;padding:4px;}
+.node-drag:active{cursor:grabbing;}
+.node-icon{font-size:20px;flex-shrink:0;}
+.node-info{flex:1;min-width:0;}
+.node-name{font-weight:600;font-size:14px;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.node-detail{display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
+.node-tag{font-size:11px;padding:2px 8px;border-radius:4px;font-weight:600;letter-spacing:.3px;}
+.tag-ss{background:rgba(99,102,241,.15);color:#818cf8;}
+.tag-vmess{background:rgba(139,92,246,.15);color:#a78bfa;}
+.tag-vless{background:rgba(6,182,212,.15);color:#22d3ee;}
+.tag-socks5{background:rgba(245,158,11,.15);color:#fbbf24;}
+.tag-http{background:rgba(16,185,129,.15);color:#34d399;}
+.node-addr{font-size:12px;color:var(--text-muted);font-family:'SF Mono',Monaco,Consolas,monospace;}
+.node-actions{display:flex;gap:6px;flex-shrink:0;}
+
+/* ── 规则列表 ── */
+.rule-item{
+  display:flex;align-items:center;gap:10px;padding:10px 14px;
+  background:var(--bg-input);border:1px solid var(--border);border-radius:var(--radius-sm);
+  animation:slideIn .3s ease;
+}
+.rule-item+.rule-item{margin-top:8px;}
+.rule-text{flex:1;font-family:'SF Mono',Monaco,Consolas,monospace;font-size:13px;color:var(--text-secondary);}
+
+/* ── 代码输出 ── */
+.code-output{position:relative;}
+.code-output textarea{
+  background:#080c18;border-color:#1e293b;color:#a5f3fc;min-height:300px;
+  font-family:'SF Mono',Monaco,Consolas,'Courier New',monospace;font-size:12px;line-height:1.7;
+}
+.copy-btn{position:absolute;top:12px;right:12px;z-index:2;}
+
+/* ── 配置区设置 ── */
+.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+/* ── 批量导入弹窗 ── */
+.modal-overlay{
+  position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);
+  z-index:1000;display:none;align-items:center;justify-content:center;
+  backdrop-filter:blur(4px);padding:20px;animation:fadeIn .2s;
+}
+.modal-overlay.active{display:flex;}
+@keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
+.modal{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-lg);
+  padding:28px;max-width:640px;width:100%;max-height:80vh;overflow-y:auto;
+  box-shadow:var(--shadow-lg);animation:modalIn .3s ease;
+}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px);}to{opacity:1;transform:scale(1) translateY(0);}}
+.modal-title{font-size:20px;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:10px;}
+.modal-close{margin-left:auto;background:none;border:none;color:var(--text-muted);font-size:24px;cursor:pointer;padding:4px;}
+.modal-close:hover{color:var(--text-primary);}
+
+/* ── 空状态 ── */
+.empty-state{text-align:center;padding:40px 20px;color:var(--text-muted);}
+.empty-state .icon{font-size:48px;margin-bottom:12px;display:block;opacity:.5;}
+.empty-state p{font-size:14px;}
+
+/* ── Toast ── */
+.toast-container{position:fixed;top:20px;right:20px;z-index:2000;display:flex;flex-direction:column;gap:8px;}
+.toast{
+  padding:12px 20px;border-radius:var(--radius-sm);font-size:14px;font-weight:500;
+  box-shadow:var(--shadow-md);animation:toastIn .3s ease,toastOut .3s ease 2.7s forwards;
+  display:flex;align-items:center;gap:8px;min-width:200px;
+}
+.toast-success{background:#065f46;color:#6ee7b7;border:1px solid #10b981;}
+.toast-error{background:#7f1d1d;color:#fca5a5;border:1px solid #ef4444;}
+.toast-info{background:#1e3a5f;color:#93c5fd;border:1px solid #3b82f6;}
+@keyframes toastIn{from{opacity:0;transform:translateX(60px);}to{opacity:1;transform:translateX(0);}}
+@keyframes toastOut{from{opacity:1;transform:translateX(0);}to{opacity:0;transform:translateX(60px);}}
+
+/* ── 响应式 ── */
+@media(max-width:640px){
+  .container{padding:12px 10px 60px;}
+  .hero{padding:32px 12px 24px;}
+  .hero-icon{font-size:44px;}
+  .card{padding:16px;}
+  .settings-grid{grid-template-columns:1fr;}
+  .input-row{flex-direction:column;}
+  .node-item{flex-wrap:wrap;}
+  .node-actions{width:100%;justify-content:flex-end;}
+  .stats-bar{gap:8px;}
+  .stat-card{padding:12px;}
+  .stat-num{font-size:22px;}
+  .btn-group{flex-direction:column;}
+  .btn-group .btn{width:100%;justify-content:center;}
+}
+
+/* ── 滚动条 ── */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:#334155;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#475569;}
+
+/* ── 协议选择器 ── */
+.protocol-tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;}
+.protocol-tab{
+  padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;
+  cursor:pointer;border:1px solid var(--border);background:transparent;
+  color:var(--text-secondary);transition:all .3s;
+}
+.protocol-tab:hover{border-color:var(--accent);color:var(--accent);}
+.protocol-tab.active{background:var(--gradient-1);color:#fff;border-color:transparent;}
+
+/* ── 节点编辑高级字段 ── */
+.advanced-fields{display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--border);}
+.advanced-fields.show{display:block;}
+.toggle-advanced{font-size:12px;color:var(--accent);cursor:pointer;background:none;border:none;font-family:inherit;font-weight:600;}
+.toggle-advanced:hover{color:var(--accent-hover);}
+
+/* ── 动画类 ── */
+.fade-out{animation:fadeOut .3s ease forwards;}
+@keyframes fadeOut{to{opacity:0;transform:translateY(-10px) scale(.97);height:0;padding:0;margin:0;overflow:hidden;}}
+
+/* ── 分隔线 ── */
+.divider{height:1px;background:var(--border);margin:24px 0;}
+</style>
+</head>
+<body>
+
+<div class="bg-animation">
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+  <div class="bg-orb"></div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<!-- ─── 主内容 ─── -->
+<div class="container">
+
+  <!-- 头部 -->
+  <div class="hero">
+    <span class="hero-icon">⛓️</span>
+    <h1>Clash 代理链配置生成器</h1>
+    <p>可视化管理落地节点，一键生成链式代理脚本。支持 SS / VMess / VLESS / SOCKS5 / HTTP 协议</p>
+  </div>
+
+  <!-- 统计条 -->
+  <div class="stats-bar">
+    <div class="stat-card">
+      <div class="stat-num" id="statNodes">0</div>
+      <div class="stat-label">落地节点</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statRules">0</div>
+      <div class="stat-label">分流规则</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-num" id="statProtocols">0</div>
+      <div class="stat-label">协议类型</div>
+    </div>
+  </div>
+
+  <!-- ═══ 节点管理 ═══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">🌐</span> 落地节点管理</div>
+      <div class="btn-group">
+        <button class="btn btn-ghost btn-sm" onclick="openBatchImport()">📋 批量导入</button>
+        <button class="btn btn-ghost btn-sm" onclick="clearAllNodes()">🗑️ 清空</button>
+      </div>
+    </div>
+
+    <!-- 快速添加 -->
+    <div class="input-group">
+      <label>快速添加 — 粘贴分享链接</label>
+      <div class="input-row">
+        <input type="text" id="quickLink" placeholder="ss:// | vmess:// | vless:// | socks5:// | http:// | https://" onkeydown="if(event.key==='Enter')quickAdd()">
+        <button class="btn btn-primary" onclick="quickAdd()" style="flex-shrink:0;">✚ 添加</button>
+      </div>
+    </div>
+    <div class="input-group">
+      <label>自定义名称（可选）</label>
+      <input type="text" id="quickName" placeholder="例如：⛓️ 落地-美国SJC-SS">
+    </div>
+
+    <!-- 节点列表 -->
+    <div class="node-list" id="nodeList"></div>
+  </div>
+
+  <!-- ═══ 分流规则 ═══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">📐</span> 链路分流规则</div>
+      <span class="badge badge-accent" id="ruleBadge">0 条</span>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">
+      匹配的流量将强制走第一个落地节点（链式代理），不经过主策略组选择。
+    </p>
+    <div class="input-group">
+      <div class="input-row">
+        <input type="text" id="ruleInput" placeholder="例如：DOMAIN-SUFFIX,ippure.com" onkeydown="if(event.key==='Enter')addRule()">
+        <button class="btn btn-primary" onclick="addRule()" style="flex-shrink:0;">✚ 添加</button>
+      </div>
+    </div>
+    <div id="ruleList"></div>
+  </div>
+
+  <!-- ═══ 高级设置 ═══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">⚙️</span> 高级设置</div>
+    </div>
+    <div class="settings-grid">
+      <div class="input-group">
+        <label>第一跳策略组名称</label>
+        <input type="text" id="firstHopName" value="🛫 第一跳-机场入口" onchange="saveConfig()">
+      </div>
+      <div class="input-group">
+        <label>排除关键词（逗号分隔）</label>
+        <input type="text" id="excludeKeywords" value="Traffic,Expire,流量,到期,剩余,套餐,官网,公告" onchange="saveConfig()">
+      </div>
+    </div>
+    <div class="input-group">
+      <label>主策略组名称匹配（逗号分隔，按顺序匹配）</label>
+      <input type="text" id="mainGroupNames" value="Proxies,proxies,PROXY,Proxy,proxy,🚀 节点选择,节点选择,♻️ 自动选择,自动选择,🔰 节点选择,Select,select" onchange="saveConfig()">
+    </div>
+  </div>
+
+  <!-- ═══ 生成脚本 ═══ -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title"><span class="icon">🚀</span> 生成脚本</div>
+    </div>
+    <button class="btn btn-success btn-block" onclick="generateScript()" style="margin-bottom:20px;">
+      ⚡ 生成 Clash 预处理脚本
+    </button>
+    <div class="code-output" id="codeOutputWrap" style="display:none;">
+      <button class="btn btn-ghost btn-sm copy-btn" onclick="copyCode()">📋 复制</button>
+      <textarea id="codeOutput" readonly></textarea>
+    </div>
+  </div>
+
+</div>
+
+<!-- ─── 批量导入弹窗 ─── -->
+<div class="modal-overlay" id="batchModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>📋 批量导入节点</span>
+      <button class="modal-close" onclick="closeBatchImport()">&times;</button>
+    </div>
+    <p style="font-size:13px;color:var(--text-muted);margin-bottom:14px;">
+      每行一个分享链接，支持 SS / VMess / VLESS / SOCKS5 / HTTP / HTTPS
+    </p>
+    <textarea id="batchInput" rows="10" placeholder="ss://xxxxx&#10;vmess://xxxxx&#10;vless://xxxxx&#10;socks5://user:pass@1.2.3.4:1080&#10;http://user:pass@5.6.7.8:8080"></textarea>
+    <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeBatchImport()">取消</button>
+      <button class="btn btn-primary" onclick="doBatchImport()">🚀 导入</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── 编辑弹窗 ─── -->
+<div class="modal-overlay" id="editModal">
+  <div class="modal">
+    <div class="modal-title">
+      <span>✏️ 编辑节点</span>
+      <button class="modal-close" onclick="closeEditModal()">&times;</button>
+    </div>
+    <div class="input-group">
+      <label>节点名称</label>
+      <input type="text" id="editName">
+    </div>
+    <div class="input-group">
+      <label>分享链接</label>
+      <textarea id="editLink" rows="4"></textarea>
+    </div>
+    <input type="hidden" id="editIndex">
+    <div style="margin-top:14px;display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeEditModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveEdit()">💾 保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ╔═══════════════════════════════════════════╗
+// ║  数据模型                                 ║
+// ╚═══════════════════════════════════════════╝
+
+var STATE = {
+  nodes: [],    // [{link, name, parsed}]
+  rules: [],    // ["DOMAIN-SUFFIX,xxx"]
+};
+
+var CACHE_KEY = "clash_chain_config_v2";
+
+function loadConfig() {
+  try {
+    var raw = localStorage.getItem(CACHE_KEY);
+    if (raw) {
+      var obj = JSON.parse(raw);
+      STATE.nodes = obj.nodes || [];
+      STATE.rules = obj.rules || [];
+      if (obj.firstHopName) document.getElementById("firstHopName").value = obj.firstHopName;
+      if (obj.excludeKeywords) document.getElementById("excludeKeywords").value = obj.excludeKeywords;
+      if (obj.mainGroupNames) document.getElementById("mainGroupNames").value = obj.mainGroupNames;
+    }
+  } catch(e) {}
+  // 重新解析
+  for (var i = 0; i < STATE.nodes.length; i++) {
+    STATE.nodes[i].parsed = parseLink(STATE.nodes[i].link);
+  }
+}
+
+function saveConfig() {
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify({
+      nodes: STATE.nodes.map(function(n){ return {link:n.link, name:n.name}; }),
+      rules: STATE.rules,
+      firstHopName: document.getElementById("firstHopName").value,
+      excludeKeywords: document.getElementById("excludeKeywords").value,
+      mainGroupNames: document.getElementById("mainGroupNames").value,
+    }));
+  } catch(e) {}
+}
+
+
+// ╔═══════════════════════════════════════════╗
+// ║  链接解析（浏览器端，支持 atob）            ║
+// ╚═══════════════════════════════════════════╝
+
+function safeDecode(str) {
+  str = str.replace(/-/g,'+').replace(/_/g,'/');
+  while (str.length % 4) str += '=';
+  try { return atob(str); } catch(e) { return str; }
+}
+
+function parseQS(qs) {
+  var r = {};
+  if (!qs) return r;
+  qs.split('&').forEach(function(p){
+    var i = p.indexOf('=');
+    if (i === -1) r[p] = '';
+    else { var k=p.substring(0,i), v=p.substring(i+1); try{v=decodeURIComponent(v);}catch(e){} r[k]=v; }
+  });
+  return r;
+}
+
+function parseURIParts(uri) {
+  var r = {user:'',pass:'',server:'',port:0};
+  var hp = uri;
+  if (uri.indexOf('@')!==-1) {
+    var ai=uri.indexOf('@'); var ui=uri.substring(0,ai); hp=uri.substring(ai+1);
+    var ci=ui.indexOf(':');
+    if (ci!==-1){r.user=ui.substring(0,ci);r.pass=ui.substring(ci+1);}
+    else r.user=ui;
+    try{r.user=decodeURIComponent(r.user);}catch(e){}
+    try{r.pass=decodeURIComponent(r.pass);}catch(e){}
+  }
+  var lc=hp.lastIndexOf(':');
+  if(lc!==-1){r.server=hp.substring(0,lc);r.port=parseInt(hp.substring(lc+1));}
+  else r.server=hp;
+  if(r.server[0]==='['&&r.server[r.server.length-1]===']') r.server=r.server.slice(1,-1);
+  return r;
+}
+
+function parseLink(link) {
+  try {
+    link = link.trim();
+    if (link.indexOf('ss://') === 0) return parseSS(link);
+    if (link.indexOf('vmess://') === 0) return parseVmess(link);
+    if (link.indexOf('vless://') === 0) return parseVless(link);
+    if (link.indexOf('socks5://') === 0 || link.indexOf('socks://') === 0 || link.indexOf('socks5h://') === 0) return parseSocks5(link);
+    if (link.indexOf('http://') === 0 || link.indexOf('https://') === 0) return parseHTTP(link);
+    return null;
+  } catch(e) { return null; }
+}
+
+function parseSS(link) {
+  var uri = link.replace('ss://','');
+  var name = '', hash = uri.indexOf('#');
+  if (hash!==-1){try{name=decodeURIComponent(uri.substring(hash+1));}catch(e){name=uri.substring(hash+1);} uri=uri.substring(0,hash);}
+  var qi = uri.indexOf('?'); if(qi!==-1) uri=uri.substring(0,qi);
+  var server,port,cipher,password;
+  if(uri.indexOf('@')!==-1){
+    var ai=uri.indexOf('@'), ui=uri.substring(0,ai), hp=uri.substring(ai+1);
+    var dec; try{dec=safeDecode(ui);}catch(e){dec=ui;}
+    var ci=dec.indexOf(':'); cipher=dec.substring(0,ci); password=dec.substring(ci+1);
+    var lc=hp.lastIndexOf(':'); server=hp.substring(0,lc); port=parseInt(hp.substring(lc+1));
+  } else {
+    return parseSS('ss://'+safeDecode(uri));
+  }
+  return {type:'ss',name:name,server:server,port:port,cipher:cipher,password:password};
+}
+
+function parseVmess(link) {
+  var j = JSON.parse(safeDecode(link.replace('vmess://','')));
+  return {type:'vmess',name:j.ps||'',server:j.add,port:parseInt(j.port),uuid:j.id,
+    alterId:parseInt(j.aid)||0,cipher:j.scy||'auto',network:j.net||'tcp',
+    tls:j.tls==='tls',sni:j.sni||'',host:j.host||'',path:j.path||''};
+}
+
+function parseVless(link) {
+  var uri=link.replace('vless://',''), name='';
+  var hi=uri.indexOf('#'); if(hi!==-1){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);} uri=uri.substring(0,hi);}
+  var qi=uri.indexOf('?'), qs=''; if(qi!==-1){qs=uri.substring(qi+1);uri=uri.substring(0,qi);}
+  var p=parseQS(qs), ai=uri.indexOf('@'), uuid=uri.substring(0,ai), hp=uri.substring(ai+1);
+  var lc=hp.lastIndexOf(':'), server=hp.substring(0,lc), port=parseInt(hp.substring(lc+1));
+  return {type:'vless',name:name,server:server,port:port,uuid:uuid,
+    security:p.security||'',sni:p.sni||'',fp:p.fp||'',pbk:p.pbk||'',sid:p.sid||'',
+    spx:p.spx||'',network:p.type||'tcp',host:p.host||'',path:p.path||'',
+    serviceName:p.serviceName||'',flow:p.flow||''};
+}
+
+function parseSocks5(link) {
+  var uri=link.replace(/^socks5h?:\/\//,'').replace(/^socks:\/\//,'');
+  var name='',hi=uri.indexOf('#');
+  if(hi!==-1){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);} uri=uri.substring(0,hi);}
+  var qi=uri.indexOf('?'); if(qi!==-1) uri=uri.substring(0,qi);
+  var info=parseURIParts(uri);
+  return {type:'socks5',name:name,server:info.server,port:info.port,user:info.user,pass:info.pass};
+}
+
+function parseHTTP(link) {
+  var tls = link.indexOf('https://') === 0;
+  var uri = link.replace(/^https?:\/\//,'');
+  var name='',hi=uri.indexOf('#');
+  if(hi!==-1){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);} uri=uri.substring(0,hi);}
+  var qi=uri.indexOf('?'); if(qi!==-1) uri=uri.substring(0,qi);
+  var info=parseURIParts(uri);
+  return {type:tls?'https':'http',name:name,server:info.server,port:info.port,user:info.user,pass:info.pass,tls:tls};
+}
+
+function getProtoIcon(type) {
+  var m = {ss:'🔵',vmess:'🟣',vless:'🔷',socks5:'🟡',http:'🟢',https:'🟢'};
+  return m[type] || '⚪';
+}
+function getProtoTag(type) {
+  var t = type.toUpperCase();
+  return '<span class="node-tag tag-'+type+'">'+t+'</span>';
+}
+
+// ╔═══════════════════════════════════════════╗
+// ║  UI 渲染                                  ║
+// ╚═══════════════════════════════════════════╝
+
+function renderNodes() {
+  var list = document.getElementById('nodeList');
+  if (STATE.nodes.length === 0) {
+    list.innerHTML = '<div class="empty-state"><span class="icon">📡</span><p>暂无落地节点，请粘贴分享链接添加</p></div>';
+    updateStats();
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < STATE.nodes.length; i++) {
+    var n = STATE.nodes[i];
+    var p = n.parsed;
+    var type = p ? p.type : 'unknown';
+    var icon = getProtoIcon(type);
+    var displayName = n.name || (p ? p.name : '') || ('节点 ' + (i+1));
+    var addr = p ? (p.server + ':' + p.port) : '解析失败';
+    html += '<div class="node-item" data-index="'+i+'" draggable="true" ondragstart="onDragStart(event)" ondragover="onDragOver(event)" ondrop="onDrop(event)" ondragend="onDragEnd(event)">';
+    html += '<span class="node-drag" title="拖拽排序">⠿</span>';
+    html += '<span class="node-icon">'+icon+'</span>';
+    html += '<div class="node-info"><div class="node-name">'+escHtml(displayName)+'</div>';
+    html += '<div class="node-detail">'+getProtoTag(type)+'<span class="node-addr">'+escHtml(addr)+'</span></div></div>';
+    html += '<div class="node-actions">';
+    html += '<button class="btn btn-ghost btn-sm" onclick="editNode('+i+')" title="编辑">✏️</button>';
+    html += '<button class="btn btn-danger btn-sm" onclick="removeNode('+i+')" title="删除">✕</button>';
+    html += '</div></div>';
+  }
+  list.innerHTML = html;
+  updateStats();
+}
+
+function renderRules() {
+  var list = document.getElementById('ruleList');
+  var badge = document.getElementById('ruleBadge');
+  badge.textContent = STATE.rules.length + ' 条';
+  if (STATE.rules.length === 0) {
+    list.innerHTML = '<div class="empty-state" style="padding:20px;"><p style="font-size:13px;">暂无规则</p></div>';
+    updateStats();
+    return;
+  }
+  var html = '';
+  for (var i = 0; i < STATE.rules.length; i++) {
+    html += '<div class="rule-item"><span class="rule-text">'+escHtml(STATE.rules[i])+'</span>';
+    html += '<button class="btn btn-danger btn-sm" onclick="removeRule('+i+')">✕</button></div>';
+  }
+  list.innerHTML = html;
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('statNodes').textContent = STATE.nodes.length;
+  document.getElementById('statRules').textContent = STATE.rules.length;
+  var types = {};
+  STATE.nodes.forEach(function(n){ if(n.parsed) types[n.parsed.type]=1; });
+  document.getElementById('statProtocols').textContent = Object.keys(types).length;
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.appendChild(document.createTextNode(s));
+  return d.innerHTML;
+}
+
+
+// ╔═══════════════════════════════════════════╗
+// ║  交互操作                                 ║
+// ╚═══════════════════════════════════════════╝
+
+function quickAdd() {
+  var link = document.getElementById('quickLink').value.trim();
+  var name = document.getElementById('quickName').value.trim();
+  if (!link) { toast('请输入分享链接','error'); return; }
+  var parsed = parseLink(link);
+  if (!parsed) { toast('链接格式无法识别','error'); return; }
+  STATE.nodes.push({ link: link, name: name || parsed.name || '', parsed: parsed });
+  document.getElementById('quickLink').value = '';
+  document.getElementById('quickName').value = '';
+  saveConfig(); renderNodes();
+  toast('节点添加成功 ✓','success');
+}
+
+function removeNode(i) {
+  var el = document.querySelectorAll('.node-item')[i];
+  if (el) { el.classList.add('fade-out'); setTimeout(function(){ STATE.nodes.splice(i,1); saveConfig(); renderNodes(); },300); }
+  else { STATE.nodes.splice(i,1); saveConfig(); renderNodes(); }
+}
+
+function clearAllNodes() {
+  if (STATE.nodes.length === 0) return;
+  if (!confirm('确定清空所有 '+STATE.nodes.length+' 个节点？')) return;
+  STATE.nodes = [];
+  saveConfig(); renderNodes();
+  toast('已清空所有节点','info');
+}
+
+function editNode(i) {
+  var n = STATE.nodes[i];
+  document.getElementById('editName').value = n.name || '';
+  document.getElementById('editLink').value = n.link || '';
+  document.getElementById('editIndex').value = i;
+  document.getElementById('editModal').classList.add('active');
+}
+function closeEditModal() { document.getElementById('editModal').classList.remove('active'); }
+function saveEdit() {
+  var i = parseInt(document.getElementById('editIndex').value);
+  var link = document.getElementById('editLink').value.trim();
+  var name = document.getElementById('editName').value.trim();
+  if (!link) { toast('链接不能为空','error'); return; }
+  var parsed = parseLink(link);
+  if (!parsed) { toast('链接格式无法识别','error'); return; }
+  STATE.nodes[i] = { link:link, name:name||parsed.name||'', parsed:parsed };
+  saveConfig(); renderNodes(); closeEditModal();
+  toast('节点已更新 ✓','success');
+}
+
+function addRule() {
+  var v = document.getElementById('ruleInput').value.trim();
+  if (!v) { toast('请输入规则','error'); return; }
+  STATE.rules.push(v);
+  document.getElementById('ruleInput').value = '';
+  saveConfig(); renderRules();
+  toast('规则添加成功 ✓','success');
+}
+function removeRule(i) {
+  STATE.rules.splice(i,1);
+  saveConfig(); renderRules();
+}
+
+// ── 批量导入 ──
+function openBatchImport() { document.getElementById('batchModal').classList.add('active'); }
+function closeBatchImport() { document.getElementById('batchModal').classList.remove('active'); }
+function doBatchImport() {
+  var text = document.getElementById('batchInput').value.trim();
+  if (!text) { toast('请粘贴链接','error'); return; }
+  var lines = text.split('\n');
+  var count = 0;
+  for (var i = 0; i < lines.length; i++) {
+    var l = lines[i].trim();
+    if (!l) continue;
+    var parsed = parseLink(l);
+    if (parsed) {
+      STATE.nodes.push({ link:l, name:parsed.name||'', parsed:parsed });
+      count++;
+    }
+  }
+  if (count > 0) {
+    saveConfig(); renderNodes();
+    toast('成功导入 '+count+' 个节点 ✓','success');
+  } else {
+    toast('未识别到有效链接','error');
+  }
+  document.getElementById('batchInput').value = '';
+  closeBatchImport();
+}
+
+// ── 拖拽排序 ──
+var dragIdx = null;
+function onDragStart(e) {
+  dragIdx = parseInt(e.currentTarget.dataset.index);
+  e.currentTarget.style.opacity = '.4';
+  e.dataTransfer.effectAllowed = 'move';
+}
+function onDragOver(e) { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }
+function onDrop(e) {
+  e.preventDefault();
+  var targetIdx = parseInt(e.currentTarget.dataset.index);
+  if (dragIdx === null || dragIdx === targetIdx) return;
+  var item = STATE.nodes.splice(dragIdx,1)[0];
+  STATE.nodes.splice(targetIdx,0,item);
+  saveConfig(); renderNodes();
+}
+function onDragEnd(e) { e.currentTarget.style.opacity = '1'; dragIdx = null; }
+
+
+// ╔═══════════════════════════════════════════╗
+// ║  生成脚本                                 ║
+// ╚═══════════════════════════════════════════╝
+
+function generateScript() {
+  if (STATE.nodes.length === 0) { toast('请先添加至少一个落地节点','error'); return; }
+
+  var firstHop = document.getElementById('firstHopName').value.trim() || '🛫 第一跳-机场入口';
+  var excludeKw = document.getElementById('excludeKeywords').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+  var mainNames = document.getElementById('mainGroupNames').value.split(',').map(function(s){return s.trim();}).filter(Boolean);
+
+  // 构建节点链接数组文本
+  var linksArr = '';
+  for (var i = 0; i < STATE.nodes.length; i++) {
+    var n = STATE.nodes[i];
+    var safeName = (n.name||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+    var safeLink = (n.link||'').replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+    linksArr += '    {\n      link: "'+safeLink+'",\n      name: "'+safeName+'",\n    },\n';
+  }
+
+  // 构建规则数组文本
+  var rulesArr = '';
+  for (var i = 0; i < STATE.rules.length; i++) {
+    var safeRule = STATE.rules[i].replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+    rulesArr += '    "'+safeRule+'",\n';
+  }
+
+  // 构建排除关键词
+  var excludeArr = '';
+  for (var i = 0; i < excludeKw.length; i++) {
+    excludeArr += '    "'+excludeKw[i].replace(/"/g,'\\"')+'",\n';
+  }
+
+  // 构建主策略组名
+  var mainArr = '';
+  for (var i = 0; i < mainNames.length; i++) {
+    mainArr += '    "'+mainNames[i].replace(/"/g,'\\"')+'",\n';
+  }
+
+  var safeFirstHop = firstHop.replace(/\\/g,'\\\\').replace(/"/g,'\\"');
+
+  var code = 'function main(params) {\n\n'
+  + '  // ╔═══════════════════════════════════════════════════╗\n'
+  + '  // ║  📝 节点配置区（由生成器自动创建）                     ║\n'
+  + '  // ╚═══════════════════════════════════════════════════╝\n\n'
+  + '  var MY_VPS_LINKS = [\n'+linksArr+'  ];\n\n'
+  + '  var CHAIN_RULES = [\n'+rulesArr+'  ];\n\n'
+  + '  var EXCLUDE_KEYWORDS = [\n'+excludeArr+'  ];\n\n'
+  + '  var FIRST_HOP_NAME = "'+safeFirstHop+'";\n\n'
+  + '  var MAIN_GROUP_NAMES = [\n'+mainArr+'  ];\n\n\n'
+  + getEngineCode()
+  + '\n}\n';
+
+  document.getElementById('codeOutput').value = code;
+  document.getElementById('codeOutputWrap').style.display = 'block';
+  document.getElementById('codeOutputWrap').scrollIntoView({behavior:'smooth',block:'center'});
+  toast('脚本生成成功 🚀','success');
+}
+
+function getEngineCode() {
+  return ''
++'  // ╔═══════════════════════════════════════════════════╗\n'
++'  // ║  🔧 引擎代码（无需修改）                              ║\n'
++'  // ╚═══════════════════════════════════════════════════╝\n\n'
++'  function base64Decode(str) {\n'
++'    var chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";\n'
++'    str = str.replace(/-/g, \'+\').replace(/_/g, \'/\');\n'
++'    while (str.length % 4) str += \'=\';\n'
++'    var output = "", buffer = 0, bits = 0;\n'
++'    for (var i = 0; i < str.length; i++) {\n'
++'      var c = str.charAt(i); if (c === \'=\') break;\n'
++'      var idx = chars.indexOf(c); if (idx === -1) continue;\n'
++'      buffer = (buffer << 6) | idx; bits += 6;\n'
++'      if (bits >= 8) { bits -= 8; output += String.fromCharCode((buffer >> bits) & 0xFF); }\n'
++'    }\n'
++'    return output;\n'
++'  }\n\n'
++'  function parseQueryString(qs) {\n'
++'    var r = {}; if (!qs) return r;\n'
++'    var pairs = qs.split(\'&\');\n'
++'    for (var i = 0; i < pairs.length; i++) {\n'
++'      var ei = pairs[i].indexOf(\'=\');\n'
++'      if (ei === -1) r[pairs[i]] = "";\n'
++'      else { var k=pairs[i].substring(0,ei), v=pairs[i].substring(ei+1); try{v=decodeURIComponent(v);}catch(e){} r[k]=v; }\n'
++'    }\n'
++'    return r;\n'
++'  }\n\n'
++'  function parseURIParts(uri) {\n'
++'    var r={user:"",pass:"",server:"",port:0}, hp=uri;\n'
++'    if(uri.indexOf(\'@\')!==-1){var ai=uri.indexOf(\'@\'),ui=uri.substring(0,ai);hp=uri.substring(ai+1);\n'
++'      var ci=ui.indexOf(\':\'); if(ci!==-1){r.user=ui.substring(0,ci);r.pass=ui.substring(ci+1);}else r.user=ui;\n'
++'      try{r.user=decodeURIComponent(r.user);}catch(e){} try{r.pass=decodeURIComponent(r.pass);}catch(e){}\n'
++'    }\n'
++'    var lc=hp.lastIndexOf(\':\');\n'
++'    if(lc!==-1){r.server=hp.substring(0,lc);r.port=parseInt(hp.substring(lc+1));}else r.server=hp;\n'
++'    if(r.server.charAt(0)===\'[\'&&r.server.charAt(r.server.length-1)===\']\') r.server=r.server.substring(1,r.server.length-1);\n'
++'    return r;\n'
++'  }\n\n'
++'  function parseSS(link, customName) {\n'
++'    var uri=link.replace("ss://",""), name=customName||"";\n'
++'    var hi=uri.indexOf(\'#\'); if(hi!==-1){if(!name){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);}} uri=uri.substring(0,hi);}\n'
++'    var qi=uri.indexOf(\'?\'); if(qi!==-1) uri=uri.substring(0,qi);\n'
++'    var server,port,cipher,password;\n'
++'    if(uri.indexOf(\'@\')!==-1){\n'
++'      var ai=uri.indexOf(\'@\'),ui=uri.substring(0,ai),hp=uri.substring(ai+1);\n'
++'      var dec; try{dec=base64Decode(ui);}catch(e){dec=ui;}\n'
++'      var ci=dec.indexOf(\':\'); cipher=dec.substring(0,ci); password=dec.substring(ci+1);\n'
++'      var lc=hp.lastIndexOf(\':\'); server=hp.substring(0,lc); port=parseInt(hp.substring(lc+1));\n'
++'    } else { return parseSS("ss://"+base64Decode(uri), customName); }\n'
++'    if(!name) name="SS-"+server+":"+port;\n'
++'    return {name:name,type:"ss",server:server,port:port,cipher:cipher,password:password,udp:true};\n'
++'  }\n\n'
++'  function parseVless(link, customName) {\n'
++'    var uri=link.replace("vless://",""), name=customName||"";\n'
++'    var hi=uri.indexOf(\'#\'); if(hi!==-1){if(!name){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);}} uri=uri.substring(0,hi);}\n'
++'    var qi=uri.indexOf(\'?\'), qs=""; if(qi!==-1){qs=uri.substring(qi+1);uri=uri.substring(0,qi);}\n'
++'    var p=parseQueryString(qs), ai=uri.indexOf(\'@\'), uuid=uri.substring(0,ai), hp=uri.substring(ai+1);\n'
++'    var lc=hp.lastIndexOf(\':\'), server=hp.substring(0,lc), port=parseInt(hp.substring(lc+1));\n'
++'    if(!name) name="VLESS-"+server+":"+port;\n'
++'    var node={name:name,type:"vless",server:server,port:port,uuid:uuid,network:p.type||"tcp",udp:true};\n'
++'    var sec=p.security||"";\n'
++'    if(sec==="reality"){node.tls=true;node["reality-opts"]={};if(p.pbk)node["reality-opts"]["public-key"]=p.pbk;if(p.sid)node["reality-opts"]["short-id"]=p.sid;if(p.spx)node["reality-opts"]["spider-x"]=p.spx;if(p.sni)node.servername=p.sni;if(p.fp)node["client-fingerprint"]=p.fp;node["skip-cert-verify"]=false;}\n'
++'    else if(sec==="tls"){node.tls=true;if(p.sni)node.servername=p.sni;if(p.fp)node["client-fingerprint"]=p.fp;if(p.alpn)node.alpn=p.alpn.split(\',\');node["skip-cert-verify"]=false;}\n'
++'    if(node.network==="ws"){node["ws-opts"]={};if(p.path)node["ws-opts"].path=p.path;if(p.host)node["ws-opts"].headers={Host:p.host};}\n'
++'    else if(node.network==="grpc"){node["grpc-opts"]={};if(p.serviceName)node["grpc-opts"]["grpc-service-name"]=p.serviceName;}\n'
++'    if(p.flow)node.flow=p.flow;\n'
++'    return node;\n'
++'  }\n\n'
++'  function parseVmess(link, customName) {\n'
++'    var j=JSON.parse(base64Decode(link.replace("vmess://","")));\n'
++'    var name=customName||j.ps||("VMess-"+j.add+":"+j.port);\n'
++'    var node={name:name,type:"vmess",server:j.add,port:parseInt(j.port),uuid:j.id,alterId:parseInt(j.aid)||0,cipher:j.scy||"auto",network:j.net||"tcp",udp:true};\n'
++'    if(j.tls==="tls"){node.tls=true;if(j.sni)node.servername=j.sni;if(j.fp)node["client-fingerprint"]=j.fp;if(j.alpn)node.alpn=j.alpn.split(\',\');node["skip-cert-verify"]=(j.insecure==="1");}\n'
++'    if(node.network==="ws"){node["ws-opts"]={};if(j.path)node["ws-opts"].path=j.path;if(j.host)node["ws-opts"].headers={Host:j.host};}\n'
++'    else if(node.network==="grpc"){node["grpc-opts"]={};if(j.path)node["grpc-opts"]["grpc-service-name"]=j.path;}\n'
++'    else if(node.network==="h2"){node["h2-opts"]={};if(j.path)node["h2-opts"].path=j.path;if(j.host)node["h2-opts"].host=[j.host];}\n'
++'    return node;\n'
++'  }\n\n'
++'  function parseSocks5(link, customName) {\n'
++'    var uri=link.replace(/^socks5h?:\\/\\//,"").replace(/^socks:\\/\\//,""), name=customName||"";\n'
++'    var hi=uri.indexOf(\'#\'); if(hi!==-1){if(!name){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);}} uri=uri.substring(0,hi);}\n'
++'    var qi=uri.indexOf(\'?\'); if(qi!==-1) uri=uri.substring(0,qi);\n'
++'    var info=parseURIParts(uri); if(!name)name="SOCKS5-"+info.server+":"+info.port;\n'
++'    var node={name:name,type:"socks5",server:info.server,port:info.port,udp:true};\n'
++'    if(info.user)node.username=info.user; if(info.pass)node.password=info.pass;\n'
++'    return node;\n'
++'  }\n\n'
++'  function parseHTTP(link, customName) {\n'
++'    var tls=link.indexOf("https://")===0, uri=link.replace(/^https?:\\/\\//,""), name=customName||"";\n'
++'    var hi=uri.indexOf(\'#\'); if(hi!==-1){if(!name){try{name=decodeURIComponent(uri.substring(hi+1));}catch(e){name=uri.substring(hi+1);}} uri=uri.substring(0,hi);}\n'
++'    var qi=uri.indexOf(\'?\'); if(qi!==-1) uri=uri.substring(0,qi);\n'
++'    var info=parseURIParts(uri); if(!name)name="HTTP-"+info.server+":"+info.port;\n'
++'    var node={name:name,type:"http",server:info.server,port:info.port};\n'
++'    if(info.user)node.username=info.user; if(info.pass)node.password=info.pass;\n'
++'    if(tls){node.tls=true;node["skip-cert-verify"]=true;}\n'
++'    return node;\n'
++'  }\n\n'
++'  function parseLink(item) {\n'
++'    try {\n'
++'      var link=item.link.trim(), cn=item.name||"";\n'
++'      if(link.indexOf("ss://")===0) return parseSS(link,cn);\n'
++'      if(link.indexOf("vless://")===0) return parseVless(link,cn);\n'
++'      if(link.indexOf("vmess://")===0) return parseVmess(link,cn);\n'
++'      if(link.indexOf("socks5://")===0||link.indexOf("socks://")===0||link.indexOf("socks5h://")===0) return parseSocks5(link,cn);\n'
++'      if(link.indexOf("http://")===0||link.indexOf("https://")===0) return parseHTTP(link,cn);\n'
++'      return null;\n'
++'    } catch(e){ return null; }\n'
++'  }\n\n\n'
++'  // ╔═══════════════════════════════════════════════════╗\n'
++'  // ║  ⚙️ 主逻辑                                        ║\n'
++'  // ╚═══════════════════════════════════════════════════╝\n\n'
++'  if(!params.proxies) params.proxies=[];\n'
++'  if(!params[\'proxy-groups\']) params[\'proxy-groups\']=[];\n'
++'  if(!params.rules) params.rules=[];\n\n'
++'  var MY_VPS_NODES=[];\n'
++'  for(var i=0;i<MY_VPS_LINKS.length;i++){var nd=parseLink(MY_VPS_LINKS[i]);if(nd)MY_VPS_NODES.push(nd);}\n'
++'  if(MY_VPS_NODES.length===0) return params;\n\n'
++'  function findMainGroup(){\n'
++'    for(var i=0;i<MAIN_GROUP_NAMES.length;i++){for(var j=0;j<params[\'proxy-groups\'].length;j++){if(params[\'proxy-groups\'][j].name===MAIN_GROUP_NAMES[i])return params[\'proxy-groups\'][j];}}\n'
++'    for(var k=0;k<params[\'proxy-groups\'].length;k++){if(params[\'proxy-groups\'][k].type==="select")return params[\'proxy-groups\'][k];}\n'
++'    return params[\'proxy-groups\'][0]||null;\n'
++'  }\n'
++'  var mainGroup=findMainGroup();\n'
++'  if(!mainGroup) return params;\n\n'
++'  var vpsNames=[];\n'
++'  for(var i=0;i<MY_VPS_NODES.length;i++) vpsNames.push(MY_VPS_NODES[i].name);\n\n'
++'  var airportNodes=[];\n'
++'  for(var i=0;i<params.proxies.length;i++){\n'
++'    var pN=params.proxies[i].name, ex=false;\n'
++'    for(var j=0;j<EXCLUDE_KEYWORDS.length;j++){if(pN.indexOf(EXCLUDE_KEYWORDS[j])!==-1){ex=true;break;}}\n'
++'    if(!ex){var isV=false;for(var k=0;k<vpsNames.length;k++){if(pN===vpsNames[k]){isV=true;break;}}if(!isV)airportNodes.push(pN);}\n'
++'  }\n'
++'  if(airportNodes.length===0) return params;\n\n'
++'  params[\'proxy-groups\'].unshift({name:FIRST_HOP_NAME,type:"select",proxies:airportNodes});\n\n'
++'  var chainProxyNames=[];\n'
++'  for(var i=0;i<MY_VPS_NODES.length;i++){\n'
++'    var nn={},src=MY_VPS_NODES[i]; for(var key in src){if(src.hasOwnProperty(key))nn[key]=src[key];}\n'
++'    nn["dialer-proxy"]=FIRST_HOP_NAME; params.proxies.push(nn); chainProxyNames.push(src.name);\n'
++'  }\n\n'
++'  if(mainGroup.proxies){\n'
++'    for(var i=chainProxyNames.length-1;i>=0;i--){\n'
++'      var ex2=false;for(var j=0;j<mainGroup.proxies.length;j++){if(mainGroup.proxies[j]===chainProxyNames[i]){ex2=true;break;}}\n'
++'      if(!ex2) mainGroup.proxies.unshift(chainProxyNames[i]);\n'
++'    }\n'
++'  }\n\n'
++'  if(CHAIN_RULES.length>0&&chainProxyNames.length>0){\n'
++'    var tp=chainProxyNames[0], nr=[];\n'
++'    for(var i=0;i<CHAIN_RULES.length;i++) nr.push(CHAIN_RULES[i]+","+tp);\n'
++'    var mg=[];for(var i=0;i<nr.length;i++)mg.push(nr[i]);for(var i=0;i<params.rules.length;i++)mg.push(params.rules[i]);\n'
++'    params.rules=mg;\n'
++'  }\n\n'
++'  return params;\n';
+}
+
+function copyCode() {
+  var ta = document.getElementById('codeOutput');
+  ta.select();
+  try {
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(ta.value).then(function(){ toast('已复制到剪贴板 ✓','success'); });
+    } else {
+      document.execCommand('copy');
+      toast('已复制到剪贴板 ✓','success');
+    }
+  } catch(e) {
+    document.execCommand('copy');
+    toast('已复制到剪贴板 ✓','success');
+  }
+}
+
+
+// ╔═══════════════════════════════════════════╗
+// ║  Toast 通知                               ║
+// ╚═══════════════════════════════════════════╝
+
+function toast(msg, type) {
+  type = type || 'info';
+  var icons = {success:'✅',error:'❌',info:'ℹ️'};
+  var container = document.getElementById('toastContainer');
+  var el = document.createElement('div');
+  el.className = 'toast toast-'+type;
+  el.innerHTML = '<span>'+icons[type]+'</span><span>'+escHtml(msg)+'</span>';
+  container.appendChild(el);
+  setTimeout(function(){ if(el.parentNode) el.parentNode.removeChild(el); }, 3200);
+}
+
+
+// ╔═══════════════════════════════════════════╗
+// ║  初始化                                   ║
+// ╚═══════════════════════════════════════════╝
+
+loadConfig();
+renderNodes();
+renderRules();
+
+// 点击弹窗外关闭
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click', function(e){ if(e.target===m) m.classList.remove('active'); });
+});
+
+</script>
+</body>
+</html>
